@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - release/**
+      - "*"
     tags:
       - "*"
 
@@ -37,30 +38,30 @@ jobs:
           skipPush: ${{github.event_name == 'pull_request'}}
       - name: Run integration tests
         run: make nix-integration-test
-      - name: Build chain utils
-        run: nix-build -A chain-utils-testnet
-      - name: Upload coverage report
-        uses: codecov/codecov-action@v1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./coverage.*.txt
-          flags: integration_tests
-      - name: Publish docker image
-        if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')
-        run: |
-          nix-build -A pystarportImage docker.nix
-          IMAGE=$(docker load < result)
-          IMAGE=${IMAGE#Loaded image: }
-          if [[ "$GITHUB_REF" = "refs/tags/"* ]]; then
-            TAG=${GITHUB_REF#refs/tags/}
-          else
-            TAG="latest"
-          fi
-          TARGET="docker.pkg.github.com/${{ github.repository }}/chain-main-pystarport:$TAG"
-          docker tag $IMAGE $TARGET
-          docker login -u "$GITHUB_ACTOR" -p "${{ github.token }}" docker.pkg.github.com
-          docker push $TARGET
-          echo "pushed: $TARGET"
+      # - name: Build chain utils
+      #   run: nix-build -A chain-utils-testnet
+      # - name: Upload coverage report
+      #   uses: codecov/codecov-action@v1
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }}
+      #     file: ./coverage.*.txt
+      #     flags: integration_tests
+      # - name: Publish docker image
+      #   if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')
+      #   run: |
+      #     nix-build -A pystarportImage docker.nix
+      #     IMAGE=$(docker load < result)
+      #     IMAGE=${IMAGE#Loaded image: }
+      #     if [[ "$GITHUB_REF" = "refs/tags/"* ]]; then
+      #       TAG=${GITHUB_REF#refs/tags/}
+      #     else
+      #       TAG="latest"
+      #     fi
+      #     TARGET="docker.pkg.github.com/${{ github.repository }}/chain-main-pystarport:$TAG"
+      #     docker tag $IMAGE $TARGET
+      #     docker login -u "$GITHUB_ACTOR" -p "${{ github.token }}" docker.pkg.github.com
+      #     docker push $TARGET
+      #     echo "pushed: $TARGET"
       - name: Tar debug files
         if: failure()
         run: tar cfz debug_files.tar.gz -C /tmp/pytest-of-runner .
@@ -71,157 +72,157 @@ jobs:
           path: debug_files.tar.gz
           if-no-files-found: ignore
 
-  test-upgrade:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: true
-      - uses: cachix/install-nix-action@v12
-      - uses: cachix/cachix-action@v8
-        with:
-          name: crypto-com
-      - name: Run integration tests
-        run: make nix-integration-test-upgrade
-      - name: Tar debug files
-        if: failure()
-        run: tar cfz debug_files_upgrade.tar.gz -C /tmp/pytest-of-runner .
-      - uses: actions/upload-artifact@v2
-        if: failure()
-        with:
-          name: debug_files_upgrade
-          path: debug_files_upgrade.tar.gz
-          if-no-files-found: ignore
+  # test-upgrade:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         submodules: true
+  #     - uses: cachix/install-nix-action@v12
+  #     - uses: cachix/cachix-action@v8
+  #       with:
+  #         name: crypto-com
+  #     - name: Run integration tests
+  #       run: make nix-integration-test-upgrade
+  #     - name: Tar debug files
+  #       if: failure()
+  #       run: tar cfz debug_files_upgrade.tar.gz -C /tmp/pytest-of-runner .
+  #     - uses: actions/upload-artifact@v2
+  #       if: failure()
+  #       with:
+  #         name: debug_files_upgrade
+  #         path: debug_files_upgrade.tar.gz
+  #         if-no-files-found: ignore
 
-  test-ledger:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: true
-      - uses: cachix/install-nix-action@v12
-      - uses: cachix/cachix-action@v8
-        with:
-          name: crypto-com
-      - name: Run integration tests
-        run: make nix-integration-test-ledger
-      - name: Tar debug files
-        if: failure()
-        run: tar cfz debug_files_ledger.tar.gz -C /tmp/pytest-of-runner .
-      - uses: actions/upload-artifact@v2
-        if: failure()
-        with:
-          name: debug_files_ledger
-          path: debug_files_ledger.tar.gz
-          if-no-files-found: ignore
+  # test-ledger:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         submodules: true
+  #     - uses: cachix/install-nix-action@v12
+  #     - uses: cachix/cachix-action@v8
+  #       with:
+  #         name: crypto-com
+  #     - name: Run integration tests
+  #       run: make nix-integration-test-ledger
+  #     - name: Tar debug files
+  #       if: failure()
+  #       run: tar cfz debug_files_ledger.tar.gz -C /tmp/pytest-of-runner .
+  #     - uses: actions/upload-artifact@v2
+  #       if: failure()
+  #       with:
+  #         name: debug_files_ledger
+  #         path: debug_files_ledger.tar.gz
+  #         if-no-files-found: ignore
 
-  test-slow:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: true
-      - uses: cachix/install-nix-action@v12
-      - uses: cachix/cachix-action@v8
-        with:
-          name: crypto-com
-      - name: Run integration tests
-        run: make nix-integration-test-slow
-      - name: Tar debug files
-        if: failure()
-        run: tar cfz debug_files_slow.tar.gz -C /tmp/pytest-of-runner .
-      - uses: actions/upload-artifact@v2
-        if: failure()
-        with:
-          name: debug_files_slow
-          path: debug_files_slow.tar.gz
-          if-no-files-found: ignore
+  # test-slow:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         submodules: true
+  #     - uses: cachix/install-nix-action@v12
+  #     - uses: cachix/cachix-action@v8
+  #       with:
+  #         name: crypto-com
+  #     - name: Run integration tests
+  #       run: make nix-integration-test-slow
+  #     - name: Tar debug files
+  #       if: failure()
+  #       run: tar cfz debug_files_slow.tar.gz -C /tmp/pytest-of-runner .
+  #     - uses: actions/upload-artifact@v2
+  #       if: failure()
+  #       with:
+  #         name: debug_files_slow
+  #         path: debug_files_slow.tar.gz
+  #         if-no-files-found: ignore
 
-  test-ibc:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: true
-      - uses: cachix/install-nix-action@v12
-      - uses: cachix/cachix-action@v8
-        with:
-          name: crypto-com
-      - name: Run integration tests
-        run: make nix-integration-test-ibc
-      - name: Tar debug files
-        if: failure()
-        run: tar cfz debug_files_ibc.tar.gz -C /tmp/pytest-of-runner .
-      - uses: actions/upload-artifact@v2
-        if: failure()
-        with:
-          name: debug_files_ibc
-          path: debug_files_ibc.tar.gz
-          if-no-files-found: ignore
+  # test-ibc:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         submodules: true
+  #     - uses: cachix/install-nix-action@v12
+  #     - uses: cachix/cachix-action@v8
+  #       with:
+  #         name: crypto-com
+  #     - name: Run integration tests
+  #       run: make nix-integration-test-ibc
+  #     - name: Tar debug files
+  #       if: failure()
+  #       run: tar cfz debug_files_ibc.tar.gz -C /tmp/pytest-of-runner .
+  #     - uses: actions/upload-artifact@v2
+  #       if: failure()
+  #       with:
+  #         name: debug_files_ibc
+  #         path: debug_files_ibc.tar.gz
+  #         if-no-files-found: ignore
 
-  test-byzantine:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: true
-      - uses: cachix/install-nix-action@v12
-      - uses: cachix/cachix-action@v8
-        with:
-          name: crypto-com
-      - name: Run integration tests
-        run: make nix-integration-test-byzantine
-      - name: Tar debug files
-        if: failure()
-        run: tar cfz debug_files_byzantine.tar.gz -C /tmp/pytest-of-runner .
-      - uses: actions/upload-artifact@v2
-        if: failure()
-        with:
-          name: debug_files_byzantine
-          path: debug_files_byzantine.tar.gz
-          if-no-files-found: ignore
+  # test-byzantine:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         submodules: true
+  #     - uses: cachix/install-nix-action@v12
+  #     - uses: cachix/cachix-action@v8
+  #       with:
+  #         name: crypto-com
+  #     - name: Run integration tests
+  #       run: make nix-integration-test-byzantine
+  #     - name: Tar debug files
+  #       if: failure()
+  #       run: tar cfz debug_files_byzantine.tar.gz -C /tmp/pytest-of-runner .
+  #     - uses: actions/upload-artifact@v2
+  #       if: failure()
+  #       with:
+  #         name: debug_files_byzantine
+  #         path: debug_files_byzantine.tar.gz
+  #         if-no-files-found: ignore
 
-  test-gov:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: true
-      - uses: cachix/install-nix-action@v12
-      - uses: cachix/cachix-action@v8
-        with:
-          name: crypto-com
-      - name: Run integration tests
-        run: make nix-integration-test-gov
-      - name: Tar debug files
-        if: failure()
-        run: tar cfz debug_files_gov.tar.gz -C /tmp/pytest-of-runner .
-      - uses: actions/upload-artifact@v2
-        if: failure()
-        with:
-          name: debug_files_gov
-          path: debug_files_gov.tar.gz
-          if-no-files-found: ignore
+  # test-gov:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         submodules: true
+  #     - uses: cachix/install-nix-action@v12
+  #     - uses: cachix/cachix-action@v8
+  #       with:
+  #         name: crypto-com
+  #     - name: Run integration tests
+  #       run: make nix-integration-test-gov
+  #     - name: Tar debug files
+  #       if: failure()
+  #       run: tar cfz debug_files_gov.tar.gz -C /tmp/pytest-of-runner .
+  #     - uses: actions/upload-artifact@v2
+  #       if: failure()
+  #       with:
+  #         name: debug_files_gov
+  #         path: debug_files_gov.tar.gz
+  #         if-no-files-found: ignore
 
 
-  test-grpc:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: true
-      - uses: cachix/install-nix-action@v12
-      - uses: cachix/cachix-action@v8
-        with:
-          name: crypto-com
-      - name: Run integration tests
-        run: make nix-integration-test-grpc
-      - name: Tar debug files
-        if: failure()
-        run: tar cfz debug_files_grpc.tar.gz -C /tmp/pytest-of-runner .
-      - uses: actions/upload-artifact@v2
-        if: failure()
-        with:
-          name: debug_files_grpc
-          path: debug_files_grpc.tar.gz
-          if-no-files-found: ignore
+  # test-grpc:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         submodules: true
+  #     - uses: cachix/install-nix-action@v12
+  #     - uses: cachix/cachix-action@v8
+  #       with:
+  #         name: crypto-com
+  #     - name: Run integration tests
+  #       run: make nix-integration-test-grpc
+  #     - name: Tar debug files
+  #       if: failure()
+  #       run: tar cfz debug_files_grpc.tar.gz -C /tmp/pytest-of-runner .
+  #     - uses: actions/upload-artifact@v2
+  #       if: failure()
+  #       with:
+  #         name: debug_files_grpc
+  #         path: debug_files_grpc.tar.gz
+  #         if-no-files-found: ignore

@@ -19,6 +19,7 @@ def test_simple(cluster):
     assert account["base_vesting_account"]["original_vesting"] == [
         {"denom": "basecro", "amount": "20000000000"}
     ]
+    assert False
 
 
 def test_transfer(cluster):

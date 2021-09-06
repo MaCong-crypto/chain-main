@@ -22,7 +22,7 @@ def pytest_addoption(parser):
         "--supervisord-quiet",
         dest="supervisord-quiet",
         action="store_true",
-        default=False,
+        default=True,
         help="redirect supervisord's stdout to file",
     )
 
