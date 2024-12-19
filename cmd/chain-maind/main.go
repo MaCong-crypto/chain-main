@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"runtime/debug"
 
 	"github.com/cosmos/cosmos-sdk/server"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
@@ -10,6 +11,9 @@ import (
 )
 
 func main() {
+	// Set the maximum stack size
+	debug.SetMaxStack(20 * 1024 * 1024) // 20MB
+
 	rootCmd, _ := cmd.NewRootCmd()
 	if err := svrcmd.Execute(rootCmd, cmd.EnvPrefix, app.DefaultNodeHome); err != nil {
 		switch e := err.(type) {
